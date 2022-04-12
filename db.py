@@ -4,7 +4,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 def create_db():
     try:
         con = psycopg2.connect(user='postgres',
-                               password='1234',
+                               password='admin',
                                host='localhost',
                                port='5432')
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
@@ -14,15 +14,22 @@ def create_db():
     except (Exception, psycopg2.Error) as error:
         print('Ошибка при работе с PostgreSQL', error)
 
+    finally:
+        if con:
+            cursor.close()
+            con.close()
+
+
 def create_table():
     try:
         con = psycopg2.connect(user='postgres',
-                               password='1234',
+                               password='admin',
                                host='localhost',
                                port='5432',
                                database='vkinder_db'
                                )
         print(con.get_dsn_parameters())
+        con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = con.cursor()
         sql_create_table = '''CREATE TABLE IF NOT EXISTS matches (
                             id SERIAL, 
@@ -35,4 +42,55 @@ def create_table():
     except (Exception, psycopg2.Error) as error:
         print('Ошибка при работе с PostgreSQL', error)
 
-create_table()
+    finally:
+        if con:
+            cursor.close()
+            con.close()
+
+
+def insert_db(user, match):
+    try:
+        con = psycopg2.connect(user='postgres',
+                               password='admin',
+                               host='localhost',
+                               port='5432',
+                               database='vkinder_db')
+        con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = con.cursor()
+        insert_query = '''INSERT INTO matches (name, match)
+            VALUES (%s, %s)'''
+        insert_tuple = (user, match)
+        cursor.execute(insert_query, insert_tuple)
+    except (Exception, psycopg2.Error) as error:
+        print('Ошибка при работе с PostgreSQL', error)
+
+    finally:
+        if con:
+            cursor.close()
+            con.close()
+
+def select_db(user, match):
+    try:
+        con = psycopg2.connect(user='postgres',
+                               password='admin',
+                               host='localhost',
+                               port='5432',
+                               database='vkinder_db')
+        con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = con.cursor()
+        select_query = '''SELECT name, match FROM matches
+            WHERE name = %s AND match = %s'''
+        select_tuple = (user, match)
+        cursor.execute(select_query, select_tuple)
+        result = cursor.fetchall()
+        if result:
+            return True
+        else:
+            return False
+    except (Exception, psycopg2.Error) as error:
+        print('Ошибка при работе с PostgreSQL', error)
+
+    finally:
+        if con:
+            cursor.close()
+            con.close()

@@ -1,7 +1,7 @@
 import random
 import vk_api
 from datetime import date
-
+from db import select_db, insert_db
 class VkBot:
     def __init__(self, community_token, user_token, user_link):
         self.vk_community = vk_api.VkApi(token=community_token)
@@ -53,16 +53,24 @@ class VkBot:
         matches = self.find_matches()
         count = len(matches['items']) - 1
         match = matches['items'][random.randint(0, count)]['id']
+        if select_db(self.get_id(), str(match)):
+            return self.get_photos()
         params = {
             'owner_id': match,
             'album_id': 'profile',
             'extended': 1
         }
-        photos = sorted(self.vk_user.method('photos.get', params)['items'], key=lambda x: x['likes']['count'],
-                        reverse=True)
-        top_photos = photos[:3]
-        result['link'] = 'https://vk.com/id' + str(match)
-        result['photos'] += ['photo' + str(x['owner_id']) + '_' + str(x['id']) for x in top_photos]
+        while True:
+            try:
+                photos = sorted(self.vk_user.method('photos.get', params)['items'], key=lambda x: x['likes']['count'],
+                                reverse=True)
+                top_photos = photos[:3]
+                result['link'] = 'https://vk.com/id' + str(match)
+                result['photos'] += ['photo' + str(x['owner_id']) + '_' + str(x['id']) for x in top_photos]
+                insert_db(self.get_id(), match)
+                break
+            except (Exception, vk_api.exceptions.ApiError) as error:
+                print('Ошибка при работе с VK_api', error)
+                return self.get_photos()
+
         return result
-vk = VkBot('5b6a1b2b17173897d66dc603143b8a221178ddf4cd89946a8f61fb8d2da26ecece132b82abd864addbb56', '193a60928cf0f5a27e478d45275fd55b815b68019b63a993005e746104d3961aad746d9b74e3d9906e7cc', 'https://vk.com/rollingonthefloorandlaughing')
-print(vk.get_photos())
