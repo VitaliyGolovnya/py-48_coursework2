@@ -44,7 +44,6 @@ class VkBot:
     def get_city(self, city_name):
         params = {'q' : city_name, 'country_id': 1}
         response = self.vk_user.method('database.getCities', params)
-        pprint(response)
         city_id = response['items'][0]['id']
         self.user_city = city_id
 
