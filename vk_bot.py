@@ -2,13 +2,14 @@ import random
 import vk_api
 from datetime import date
 from db import select_db, insert_db
+from pprint import pprint
 class VkBot:
     def __init__(self, community_token, user_token, user_link):
         self.vk_community = vk_api.VkApi(token=community_token)
         self.vk_user = vk_api.VkApi(token=user_token)
         self.user_link = user_link
-        self.user_age = 0
-        self.user_city = 0
+        self.user_age = 'no_age'
+        self.user_city = 'no_city'
 
     def get_id(self):
         user_id = self.user_link.split('/')
@@ -28,23 +29,28 @@ class VkBot:
             bdate = user_data[0]['bdate'].split('.')
             if len(bdate) == 3:
                 self.user_age = date.today().year - int(bdate[-1])
-                return None
+                return self.user_age
         else:
-            return 'no_age'
+            return self.user_age
 
     def check_city(self):
         user_data = self.get_user_info()
         if 'city' in user_data[0].keys():
             self.user_city = user_data[0]['city']['id']
-            return None
+            return self.user_city
         else:
-            return 'no_city'
+            return self.user_city
 
     def get_city(self, city_name):
-        params = {'q' : city_name}
+        params = {'q' : city_name, 'country_id': 1}
         response = self.vk_user.method('database.getCities', params)
-        city_id = response['response']['items'][0]['id']
-        return city_id
+        pprint(response)
+        city_id = response['items'][0]['id']
+        self.user_city = city_id
+
+    def get_age(self, age):
+        self.user_age = age
+
 
     def find_matches(self):
         if self.check_city() == 'no_city':
