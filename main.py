@@ -4,12 +4,6 @@ from vk_bot import VkBot
 import time
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
-comunity_token = '5b6a1b2b17173897d66dc603143b8a221178ddf4cd89946a8f61fb8d2da26ecece132b82abd864addbb56'
-
-vk = vk_api.VkApi(token=comunity_token)
-longpoll = VkBotLongPoll(vk, group_id=212424686, wait=25)
-
-
 
 def write_message(user_id, message, attachment=None):
     vk.method('messages.send', {'user_id': user_id, 'message': message, 'attachment': attachment,
@@ -36,45 +30,52 @@ def send_match(request):
     return 'quit'
 
 
-mode = None
-for event in longpoll.listen():
-    if event.type == VkBotEventType.MESSAGE_NEW and event.from_user:
+if __name__ == '__main__':
+    with open(r"C:\Users\vital\Desktop\token.txt") as file:
+        comunity_token = file.read()
 
-        request = event.object
+    vk = vk_api.VkApi(token=comunity_token)
+    longpoll = VkBotLongPoll(vk, group_id=212424686, wait=25)
 
-        if str.lower(request['message']['text']) == "начать":
-            write_message(request['message']['from_id'], "Введите свой токен")
-            mode = 'token'
+    mode = None
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW and event.from_user:
 
-        elif mode == 'token':
-            user_token = request['message']['text']
-            write_message(request['message']['from_id'], "Кому ищем пару?")
-            mode = 'user_link'
-            vk_bot = None
+            request = event.object
 
-        elif mode == 'user_link':
-            if vk_bot is None:
-                try:
-                    user_link = request['message']['text']
-                    vk_bot = VkBot(comunity_token, user_token, user_link)
-                except (Exception, vk_api.exceptions.ApiError) as error:
-                    print('Ошибка ввода', error)
-            mode = send_match(request)
+            if str.lower(request['message']['text']) == "начать":
+                write_message(request['message']['from_id'], "Введите свой токен")
+                mode = 'token'
 
+            elif mode == 'token':
+                user_token = request['message']['text']
+                write_message(request['message']['from_id'], "Кому ищем пару?")
+                mode = 'user_link'
+                vk_bot = None
 
-        elif mode == 'age_request':
-            vk_bot.get_age(int(request['message']['text']))
-            mode = send_match(request)
-
-        elif mode == 'city_request':
-            vk_bot.get_city( request['message']['text'])
-            mode = send_match(request)
-
-        elif mode == 'quit':
-            if str.lower(request['message']['text']) == 'y':
+            elif mode == 'user_link':
+                if vk_bot is None:
+                    try:
+                        user_link = request['message']['text']
+                        vk_bot = VkBot(comunity_token, user_token, user_link)
+                    except (Exception, vk_api.exceptions.ApiError) as error:
+                        print('Ошибка ввода', error)
                 mode = send_match(request)
-            elif str.lower(request['message']['text']) == 'n':
-                write_message(request['message']['from_id'], "Выход из программы")
-                time.sleep(1)
-                write_message(request['message']['from_id'], 'Напишите "начать", чтобы запустить программу заново')
-                mode = None
+
+
+            elif mode == 'age_request':
+                vk_bot.get_age(int(request['message']['text']))
+                mode = send_match(request)
+
+            elif mode == 'city_request':
+                vk_bot.get_city(request['message']['text'])
+                mode = send_match(request)
+
+            elif mode == 'quit':
+                if str.lower(request['message']['text']) == 'y':
+                    mode = send_match(request)
+                elif str.lower(request['message']['text']) == 'n':
+                    write_message(request['message']['from_id'], "Выход из программы")
+                    time.sleep(1)
+                    write_message(request['message']['from_id'], 'Напишите "начать", чтобы запустить программу заново')
+                    mode = None
