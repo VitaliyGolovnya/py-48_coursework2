@@ -2,14 +2,14 @@ import random
 import vk_api
 from datetime import date
 from db import select_db, insert_db
-from pprint import pprint
+
 class VkBot:
-    def __init__(self, community_token, user_token, user_link):
-        self.vk_community = vk_api.VkApi(token=community_token)
+    def __init__(self, user_token, user_link):
         self.vk_user = vk_api.VkApi(token=user_token)
         self.user_link = user_link
         self.user_age = 'no_age'
         self.user_city = 'no_city'
+        self.error = False
 
     def get_id(self):
         user_id = self.user_link.split('/')
@@ -20,7 +20,7 @@ class VkBot:
             'user_ids': self.get_id(),
             'fields': 'sex, bdate, city, relation, age'
         }
-        response = self.vk_community.method('users.get', params)
+        response = self.vk_user.method('users.get', params)
         return response
 
     def check_age(self):
@@ -30,6 +30,7 @@ class VkBot:
             if len(bdate) == 3:
                 self.user_age = date.today().year - int(bdate[-1])
                 return self.user_age
+            return self.user_age
         else:
             return self.user_age
 
@@ -86,7 +87,9 @@ class VkBot:
             return 'no_city'
         count = len(matches['items']) - 1
         match = matches['items'][random.randint(0, count)]['id']
-        if select_db(self.get_id(), str(match)):
+        if select_db(self.get_id(), str(match)) == "db_error":
+            self.error = True
+        elif select_db(self.get_id(), str(match)):
             return self.get_photos()
         params = {
             'owner_id': match,
@@ -107,3 +110,4 @@ class VkBot:
                 return self.get_photos()
 
         return result
+

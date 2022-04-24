@@ -14,10 +14,6 @@ def create_db():
     except (Exception, psycopg2.Error) as error:
         print('Ошибка при работе с PostgreSQL', error)
 
-    finally:
-        if con:
-            cursor.close()
-            con.close()
 
 
 def create_table():
@@ -28,7 +24,6 @@ def create_table():
                                port='5432',
                                database='vkinder_db'
                                )
-        print(con.get_dsn_parameters())
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = con.cursor()
         sql_create_table = '''CREATE TABLE IF NOT EXISTS matches (
@@ -41,11 +36,6 @@ def create_table():
 
     except (Exception, psycopg2.Error) as error:
         print('Ошибка при работе с PostgreSQL', error)
-
-    finally:
-        if con:
-            cursor.close()
-            con.close()
 
 
 def insert_db(user, match):
@@ -63,11 +53,8 @@ def insert_db(user, match):
         cursor.execute(insert_query, insert_tuple)
     except (Exception, psycopg2.Error) as error:
         print('Ошибка при работе с PostgreSQL', error)
+        return 'db_error'
 
-    finally:
-        if con:
-            cursor.close()
-            con.close()
 
 def select_db(user, match):
     try:
@@ -89,8 +76,4 @@ def select_db(user, match):
             return False
     except (Exception, psycopg2.Error) as error:
         print('Ошибка при работе с PostgreSQL', error)
-
-    finally:
-        if con:
-            cursor.close()
-            con.close()
+        return 'db_error'
